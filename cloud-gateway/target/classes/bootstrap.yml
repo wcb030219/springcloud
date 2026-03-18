@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: cloudGateway # ????
+  profiles:
+    active: dev #????????dev
+  cloud:
+    nacos:
+      server-addr: localhost:8848 # Nacos??
+      discovery:
+        namespace: fd062244-7423-4742-a1eb-fba6113748ee
+      config:
+        file-extension: yaml # ?????
+        namespace: fd062244-7423-4742-a1eb-fba6113748ee
