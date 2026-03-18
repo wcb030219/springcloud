@@ -10,7 +10,13 @@
         <option value="$PROJECT_DIR$/cloud-oreder/pom.xml" />
         <option value="$PROJECT_DIR$/cloud-user/pom.xml" />
         <option value="$PROJECT_DIR$/cloud-product/pom.xml" />
+        <option value="$PROJECT_DIR$/fegin-api/pom.xml" />
       </list>
+    </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/fegin-api/pom.xml" />
+      </set>
     </option>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="corretto-1.8" project-jdk-type="JavaSDK">
