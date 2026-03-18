@@ -1,7 +1,7 @@
 server:
   port: 8088
   servlet:
-    context-path: /order
+    context-path: /product
 spring:
   application:
     name: cloudProduct # ????

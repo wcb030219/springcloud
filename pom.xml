@@ -19,6 +19,7 @@
         <module>cloud-order</module>
         <module>cloud-product</module>
         <module>cloud-user</module>
+
     </modules>
     <packaging>pom</packaging>
 

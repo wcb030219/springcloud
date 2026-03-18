@@ -10,6 +10,7 @@
         <module name="cloud-order" />
         <module name="cloud-user" />
         <module name="cloud-gateway" />
+        <module name="fegin-api" />
       </profile>
     </annotationProcessing>
   </component>
@@ -19,7 +20,7 @@
       <module name="cloud-order" options="" />
       <module name="cloud-product" options="" />
       <module name="cloud-user" options="" />
-      <module name="fegin-api" options="-parameters" />
+      <module name="fegin-api" options="" />
     </option>
   </component>
 </project>
