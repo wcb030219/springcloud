@@ -1,0 +1,11 @@
+diff a/.idea/compiler.xml b/.idea/compiler.xml	(rejected hunks)
+@@ -12,6 +12,9 @@
+         <module name="cloud-gateway" />
+       </profile>
+     </annotationProcessing>
++    <bytecodeTargetLevel>
++      <module name="fegin-api" target="17" />
++    </bytecodeTargetLevel>
+   </component>
+   <component name="JavacSettings">
+     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
