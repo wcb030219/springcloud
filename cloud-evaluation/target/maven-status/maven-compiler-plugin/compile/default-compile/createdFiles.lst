@@ -1,0 +1,8 @@
+com\example\cloudevaluation\mapper\EvaluationReportMapper.class
+com\example\cloudevaluation\mapper\EvaluationAnswerMapper.class
+com\example\cloudevaluation\dto\EvaluationSubmitAnswersRequest.class
+com\example\cloudevaluation\controller\AdminEvaluationController.class
+com\example\cloudevaluation\mapper\CourseMapper.class
+com\example\cloudevaluation\dto\EvaluationSubmitAnswersRequest$AnswerItem.class
+com\example\cloudevaluation\controller\AdminEvaluationReportController.class
+com\example\cloudevaluation\mapper\EvaluationTemplateMapper.class

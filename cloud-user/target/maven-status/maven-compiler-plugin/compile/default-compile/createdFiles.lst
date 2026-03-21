@@ -1,2 +1,3 @@
-com\example\clouduser\CloudUserApplication.class
+com\example\clouduser\controller\AdminUserController.class
 com\example\clouduser\controller\TestController.class
+com\example\clouduser\CloudUserApplication.class

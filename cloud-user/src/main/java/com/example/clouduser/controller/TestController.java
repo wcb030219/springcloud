@@ -1,7 +1,7 @@
 package com.example.clouduser.controller;
 
-import org.example.client.orderClient.TestOrderClient;
-import org.example.client.productClient.TestProductClient;
+import org.example.client.courseClient.TestCourseClient;
+import org.example.client.evaluationClient.TestEvaluationClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,17 +14,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1")
 public class TestController {
     @Autowired
-    private TestOrderClient testOrderClient;
+    private TestCourseClient testCourseClient;
     
     @Autowired
-    private TestProductClient testProductClient;
+    private TestEvaluationClient testEvaluationClient;
 
     @PostMapping("/get")
     public String get(){return "user";}
 
-    @PostMapping("/call-order")
-    public String callOrder(){return testOrderClient.get();}
+    @PostMapping("/call-course")
+    public String callCourse(){return testCourseClient.get();}
     
-    @PostMapping("/call-product")
-    public String callProduct(){return testProductClient.get();}
+    @PostMapping("/call-evaluation")
+    public String callEvaluation(){return testEvaluationClient.get();}
 }

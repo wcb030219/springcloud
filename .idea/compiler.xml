@@ -7,13 +7,17 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="cloud-product" />
-        <module name="cloud-order" />
         <module name="cloud-user" />
         <module name="cloud-gateway" />
+        <module name="cloud-course" />
+        <module name="cloud-evaluation" />
         <module name="fegin-api" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="cloud-order" target="1.8" />
+      <module name="cloud-product" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">

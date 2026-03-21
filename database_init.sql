@@ -47,6 +47,17 @@ CREATE TABLE IF NOT EXISTS `course` (
     KEY `idx_course_status` (`course_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程表';
 
+-- 课程分类表
+CREATE TABLE IF NOT EXISTS `course_category` (
+    `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '分类ID',
+    `category_name` VARCHAR(50) NOT NULL COMMENT '分类名称',
+    `status` TINYINT(1) DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_category_name` (`category_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程分类表';
+
 -- 选课表
 CREATE TABLE IF NOT EXISTS `course_selection` (
     `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '选课ID',
@@ -145,18 +156,20 @@ CREATE TABLE IF NOT EXISTS `evaluation_answer` (
 
 -- 插入初始管理员数据
 INSERT INTO `user` (`username`, `password`, `real_name`, `role_type`, `student_no`, `phone`, `email`, `status`) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EHsM8lE9lBO', '系统管理员', 1, 'ADMIN001', '13800138000', 'admin@example.com', 1);
+('admin', '030219', '系统管理员', 1, 'ADMIN001', '13800138000', 'admin@example.com', 1);
 
 -- 插入初始教师数据
 INSERT INTO `user` (`username`, `password`, `real_name`, `role_type`, `student_no`, `phone`, `email`, `status`) VALUES
-('teacher1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EHsM8lE9lBO', '张老师', 2, 'T2023001', '13800138001', 'teacher1@example.com', 1),
-('teacher2', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EHsM8lE9lBO', '李老师', 2, 'T2023002', '13800138002', 'teacher2@example.com', 1);
+('teacher1', '030219', '张老师', 2, 'T2023001', '13800138001', 'teacher1@example.com', 1),
+('teacher2', '030219', '李老师', 2, 'T2023002', '13800138002', 'teacher2@example.com', 1);
 
 -- 插入初始学生数据
 INSERT INTO `user` (`username`, `password`, `real_name`, `role_type`, `student_no`, `phone`, `email`, `status`) VALUES
-('student1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EHsM8lE9lBO', '王小明', 3, 'S2023001', '13800138003', 'student1@example.com', 1),
-('student2', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EHsM8lE9lBO', '李小红', 3, 'S2023002', '13800138004', 'student2@example.com', 1),
-('student3', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EHsM8lE9lBO', '张伟', 3, 'S2023003', '13800138005', 'student3@example.com', 1);
+('student1', '030219', '王小明', 3, 'S2023001', '13800138003', 'student1@example.com', 1),
+('student2', '030219', '李小红', 3, 'S2023002', '13800138004', 'student2@example.com', 1),
+('student3', '030219', '张伟', 3, 'S2023003', '13800138005', 'student3@example.com', 1);
+
+UPDATE `user` SET `password` = '030219';
 
 -- 插入初始课程数据
 INSERT INTO `course` (`course_name`, `course_no`, `teacher_id`, `course_category`, `credit`, `class_hours`, `class_time`, `class_location`, `capacity`, `selected_count`, `course_status`, `description`) VALUES
@@ -165,6 +178,9 @@ INSERT INTO `course` (`course_name`, `course_no`, `teacher_id`, `course_category
 ('数据结构', 'CS103', 2, '计算机科学', 4.0, 64, '周三 1-2节', '教学楼A103', 45, 0, 1, '数据结构与算法'),
 ('计算机网络', 'CS104', 3, '计算机科学', 3.0, 48, '周四 3-4节', '教学楼A104', 50, 0, 1, '计算机网络基础'),
 ('操作系统', 'CS105', 3, '计算机科学', 4.0, 64, '周五 1-2节', '教学楼A105', 40, 0, 1, '操作系统原理');
+
+INSERT IGNORE INTO `course_category` (`category_name`, `status`) VALUES
+('计算机科学', 1);
 
 -- 插入初始评估模板数据
 INSERT INTO `evaluation_template` (`template_name`, `template_type`, `description`, `status`) VALUES

@@ -1,5 +1,7 @@
 package org.example.pojo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -9,6 +11,7 @@ import java.util.Date;
  * 成绩实体类
  */
 @Data
+@TableName("grade")
 public class Grade implements Serializable {
     
     private static final long serialVersionUID = 1L;
@@ -61,15 +64,18 @@ public class Grade implements Serializable {
     /**
      * 学生姓名
      */
+    @TableField(exist = false)
     private String studentName;
     
     /**
      * 课程信息
      */
+    @TableField(exist = false)
     private Course course;
     
     /**
      * 录入教师姓名
      */
+    @TableField(exist = false)
     private String teacherName;
 }
