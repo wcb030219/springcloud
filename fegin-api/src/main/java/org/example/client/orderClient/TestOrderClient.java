@@ -5,13 +5,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
- * @author: poet_Dai
- * @create: 2024-11-23 16:24
- * @Description:
+ * 订单服务Feign客户端
  */
 @FeignClient("cloudOrder")
 @RequestMapping("/order/v1")
 public interface TestOrderClient {
     @PostMapping("/get")
     public String get();
+    
+    @PostMapping("/call-user")
+    public String callUser();
+    
+    @PostMapping("/call-product")
+    public String callProduct();
 }

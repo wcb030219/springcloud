@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.example.cloudgateway.CloudGatewayApplicationTests
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.924 s -- in com.example.cloudgateway.CloudGatewayApplicationTests
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.473 s -- in com.example.cloudgateway.CloudGatewayApplicationTests
