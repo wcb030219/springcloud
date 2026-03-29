@@ -61,6 +61,7 @@ public class AdminUserController {
         }
 
         user.setUsername(username);
+        user.setId(null);
         user.setPassword(DEFAULT_PASSWORD);
         if (user.getStatus() == null) user.setStatus(1);
         Date now = new Date();
@@ -120,5 +121,13 @@ public class AdminUserController {
         userMapper.updateById(user);
         return Result.success("密码已重置为 " + DEFAULT_PASSWORD);
     }
-}
 
+    @PostMapping("/delete")
+    public Result<String> delete(@RequestParam Long id) {
+        User user = userMapper.selectById(id);
+        if (user == null) return Result.fail("用户不存在");
+        if (user.getRoleType() != null && user.getRoleType() == 1) return Result.fail("不允许删除管理员账号");
+        userMapper.deleteById(id);
+        return Result.success("删除成功");
+    }
+}

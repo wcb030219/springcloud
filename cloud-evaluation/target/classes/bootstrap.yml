@@ -3,6 +3,8 @@ server:
 spring:
   application:
     name: cloudEvaluation # 服务名称
+  jackson:
+    time-zone: GMT+8
   profiles:
     active: dev #????????dev
   cloud:

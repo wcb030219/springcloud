@@ -21,6 +21,7 @@
         <template #default="{ row }">
           <el-button size="small" @click="openEdit(row)">编辑</el-button>
           <el-button size="small" type="warning" @click="toggle(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
+          <el-button size="small" type="danger" plain @click="removeCategory(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -47,7 +48,7 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { http } from '../../api/http'
 
 const loading = ref(false)
@@ -131,6 +132,18 @@ async function toggle(row) {
   }
 }
 
+async function removeCategory(row) {
+  try {
+    await ElMessageBox.confirm('确认删除该分类？', '提示', { type: 'warning' })
+    await http.post('/course/v1/admin/category/delete', null, { params: { id: row.id } })
+    ElMessage.success('已删除')
+    await fetchCategories()
+  } catch (e) {
+    if (e === 'cancel') return
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
 onMounted(fetchCategories)
 </script>
 
@@ -141,4 +154,3 @@ onMounted(fetchCategories)
   gap: 8px;
 }
 </style>
-

@@ -3,6 +3,8 @@ server:
 spring:
   application:
     name: cloudUser # ????
+  jackson:
+    time-zone: GMT+8
   profiles:
     active: dev #????????dev
   cloud:

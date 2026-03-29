@@ -1,9 +1,11 @@
 package com.example.cloudevaluation.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.cloudevaluation.mapper.CourseMapper;
 import com.example.cloudevaluation.mapper.EvaluationQuestionMapper;
 import com.example.cloudevaluation.mapper.EvaluationTemplateMapper;
 import org.example.common.Result;
+import org.example.pojo.Course;
 import org.example.pojo.EvaluationQuestion;
 import org.example.pojo.EvaluationTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,9 @@ public class AdminEvaluationController {
 
     @Autowired
     private EvaluationQuestionMapper questionMapper;
+
+    @Autowired
+    private CourseMapper courseMapper;
 
     @GetMapping("/template/list")
     public Result<List<EvaluationTemplate>> templateList(@RequestParam(required = false) Integer status) {
@@ -86,6 +91,56 @@ public class AdminEvaluationController {
         return Result.success(status == 1 ? "已启用" : "已禁用");
     }
 
+    @PostMapping("/template/delete")
+    public Result<String> templateDelete(@RequestParam Long id) {
+        EvaluationTemplate template = templateMapper.selectById(id);
+        if (template == null) return Result.fail("模板不存在");
+
+        LambdaQueryWrapper<EvaluationQuestion> q = new LambdaQueryWrapper<>();
+        q.eq(EvaluationQuestion::getTemplateId, id);
+        questionMapper.delete(q);
+        courseMapper.deleteCourseTemplateBindingsByTemplateId(id);
+        templateMapper.deleteById(id);
+        return Result.success("删除成功");
+    }
+
+    @PostMapping("/courseTemplate/bind")
+    public Result<String> bindCourseTemplate(@RequestParam Long courseId, @RequestParam Long templateId) {
+        if (courseId == null) return Result.fail("课程ID不能为空");
+        if (templateId == null) return Result.fail("模板ID不能为空");
+        Course course = courseMapper.selectById(courseId);
+        if (course == null) return Result.fail("课程不存在");
+        EvaluationTemplate template = templateMapper.selectById(templateId);
+        if (template == null) return Result.fail("模板不存在");
+        if (template.getStatus() == null || template.getStatus() != 1) return Result.fail("模板未启用");
+
+        Long existingTemplateId = courseMapper.getEvaluationTemplateIdByCourseId(courseId);
+        if (existingTemplateId != null) {
+            if (existingTemplateId.equals(templateId)) return Result.fail("该课程已绑定该模板，请先解绑后再绑定");
+            EvaluationTemplate existingTemplate = templateMapper.selectById(existingTemplateId);
+            String name = existingTemplate == null ? String.valueOf(existingTemplateId) : existingTemplate.getTemplateName();
+            return Result.fail("该课程已绑定其他模板（" + name + "），请先解绑后再绑定");
+        }
+
+        courseMapper.upsertEvaluationTemplateForCourse(courseId, templateId);
+        return Result.success("绑定成功");
+    }
+
+    @GetMapping("/template/bindings")
+    public Result<List<Course>> templateBindings(@RequestParam Long templateId) {
+        if (templateId == null) return Result.fail("模板ID不能为空");
+        if (templateMapper.selectById(templateId) == null) return Result.fail("模板不存在");
+        return Result.success(courseMapper.listCoursesByTemplateId(templateId));
+    }
+
+    @PostMapping("/courseTemplate/unbind")
+    public Result<String> unbindCourseTemplate(@RequestParam Long courseId, @RequestParam Long templateId) {
+        if (courseId == null) return Result.fail("课程ID不能为空");
+        if (templateId == null) return Result.fail("模板ID不能为空");
+        courseMapper.unbindCourseTemplate(courseId, templateId);
+        return Result.success("解绑成功");
+    }
+
     @GetMapping("/question/list")
     public Result<List<EvaluationQuestion>> questionList(@RequestParam Long templateId, @RequestParam(required = false) Integer status) {
         LambdaQueryWrapper<EvaluationQuestion> queryWrapper = new LambdaQueryWrapper<>();
@@ -146,5 +201,12 @@ public class AdminEvaluationController {
         questionMapper.updateById(q);
         return Result.success(status == 1 ? "已启用" : "已禁用");
     }
-}
 
+    @PostMapping("/question/delete")
+    public Result<String> questionDelete(@RequestParam Long id) {
+        EvaluationQuestion q = questionMapper.selectById(id);
+        if (q == null) return Result.fail("题目不存在");
+        questionMapper.deleteById(id);
+        return Result.success("删除成功");
+    }
+}

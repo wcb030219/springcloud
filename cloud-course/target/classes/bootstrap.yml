@@ -3,6 +3,8 @@ server:
 spring:
   application:
     name: cloudCourse # 服务名称
+  jackson:
+    time-zone: GMT+8
   profiles:
     active: dev #开发环境，这里是dev
   cloud:

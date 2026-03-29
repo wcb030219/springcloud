@@ -1,6 +1,8 @@
 package org.example.pojo;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -19,6 +21,7 @@ public class Course implements Serializable {
     /**
      * 课程ID
      */
+    @TableId(type = IdType.AUTO)
     private Long id;
     
     /**
@@ -40,6 +43,8 @@ public class Course implements Serializable {
      * 课程类别
      */
     private String courseCategory;
+
+    private Integer courseType;
     
     /**
      * 学分

@@ -3,10 +3,10 @@
     <template #header>教师-录入/修改成绩</template>
     <el-form :model="form" label-width="90px" class="grade-form">
       <el-form-item label="学生ID">
-        <el-input v-model.number="form.studentId" placeholder="例如 4" />
+        <el-input v-model="form.studentId" placeholder="例如 4" />
       </el-form-item>
       <el-form-item label="课程ID">
-        <el-input v-model.number="form.courseId" placeholder="例如 1" />
+        <el-input v-model="form.courseId" placeholder="例如 1" />
       </el-form-item>
       <el-form-item label="成绩">
         <el-input v-model.number="form.gradeScore" placeholder="例如 92.5" />
@@ -28,8 +28,8 @@ import { http } from '../../api/http'
 
 const saving = ref(false)
 const form = reactive({
-  studentId: null,
-  courseId: null,
+  studentId: '',
+  courseId: '',
   gradeScore: null,
   remarks: '',
 })
@@ -61,4 +61,3 @@ async function submit() {
   max-width: 520px;
 }
 </style>
-

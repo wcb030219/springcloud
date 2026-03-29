@@ -19,7 +19,9 @@
           <el-table-column prop="id" label="课程ID" width="90" />
           <el-table-column prop="courseNo" label="课程编号" width="120" />
           <el-table-column prop="courseName" label="课程名称" min-width="200" />
-          <el-table-column prop="teacherId" label="教师ID" width="100" />
+          <el-table-column prop="teacherName" label="教师" width="140" />
+          <el-table-column prop="courseCategory" label="分类" width="140" />
+          <el-table-column prop="credit" label="学分" width="90" />
         </el-table>
       </el-collapse-item>
     </el-collapse>
@@ -54,4 +56,3 @@ onMounted(fetchTimetable)
   margin-bottom: 12px;
 }
 </style>
-

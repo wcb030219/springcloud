@@ -75,7 +75,7 @@ public class Constants {
      * 系统常量
      */
     public static class System {
-        public static final String DEFAULT_PASSWORD = "123456"; // 默认密码
+        public static final String DEFAULT_PASSWORD = "030219"; // 默认密码
         public static final int PAGE_SIZE = 10; // 默认分页大小
         public static final int MAX_PAGE_SIZE = 100; // 最大分页大小
     }

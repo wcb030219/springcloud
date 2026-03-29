@@ -16,8 +16,11 @@ import org.springframework.web.bind.annotation.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/grade")
@@ -45,7 +48,27 @@ public class GradeController {
                     .orderByDesc(Grade::getCreateTime);
         
         List<Grade> grades = gradeMapper.selectList(queryWrapper);
+        fillCourses(grades);
         return Result.success(grades);
+    }
+
+    private void fillCourses(List<Grade> grades) {
+        if (grades == null || grades.isEmpty()) return;
+        List<Long> courseIds = new ArrayList<>();
+        for (Grade g : grades) {
+            if (g != null && g.getCourseId() != null) courseIds.add(g.getCourseId());
+        }
+        if (courseIds.isEmpty()) return;
+        List<Course> courses = courseMapper.selectBatchIds(courseIds);
+        Map<Long, Course> map = new LinkedHashMap<>();
+        if (courses != null) {
+            for (Course c : courses) {
+                if (c != null && c.getId() != null) map.put(c.getId(), c);
+            }
+        }
+        for (Grade g : grades) {
+            if (g != null && g.getCourseId() != null) g.setCourse(map.get(g.getCourseId()));
+        }
     }
 
     /**
@@ -79,6 +102,7 @@ public class GradeController {
             return Result.success("成绩更新成功");
         } else {
             // 4. 如果不存在，则执行插入
+            grade.setId(null);
             grade.setTeacherId(userId);
             grade.setGradeStatus(1); // 1-正常
             grade.setCreateTime(new Date());

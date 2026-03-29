@@ -73,7 +73,7 @@ async function fetchCourses() {
     const list = Array.isArray(res.data) ? res.data : []
     const m = new Map()
     list.forEach((c) => {
-      if (c && c.id != null) m.set(Number(c.id), c)
+      if (c && c.id != null) m.set(String(c.id), c)
     })
     courseMap.value = m
   } catch {
@@ -88,7 +88,7 @@ async function fetchAvg() {
     const res = await http.get('/evaluation/v1/admin/report/courseAvg', { params: { top: 50 } })
     const list = Array.isArray(res.data) ? res.data : []
     rows.value = list.map((r) => {
-      const courseId = Number(r.courseId)
+      const courseId = r?.courseId == null ? '' : String(r.courseId)
       const c = courseMap.value.get(courseId)
       return {
         ...r,
@@ -118,7 +118,7 @@ async function openStats(row) {
     const res = await http.get('/evaluation/v1/admin/report/courseStats', { params: { courseId } })
     const data = res.data || null
     if (!data) return
-    const c = courseMap.value.get(Number(courseId))
+    const c = courseMap.value.get(String(courseId))
     stats.value = { ...data, courseName: c ? c.courseName : '' }
     distRows.value = buildDistRows(stats.value.distribution, Number(stats.value.count || 0))
     dialogVisible.value = true
@@ -160,4 +160,3 @@ onMounted(fetchAvg)
   color: #6b7280;
 }
 </style>
-

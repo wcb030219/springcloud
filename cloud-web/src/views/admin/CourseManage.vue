@@ -15,6 +15,11 @@
           <el-option label="下架" :value="0" />
         </el-select>
       </el-form-item>
+      <el-form-item label="分类">
+        <el-select v-model="query.courseCategory" placeholder="全部" clearable filterable style="width: 180px">
+          <el-option v-for="c in categories" :key="c.id" :label="c.categoryName" :value="c.categoryName" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" :loading="loading" @click="fetchCourses">查询</el-button>
         <el-button @click="resetQuery">重置</el-button>
@@ -26,7 +31,16 @@
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="courseNo" label="课程编号" width="120" />
       <el-table-column prop="courseName" label="课程名称" min-width="180" />
-      <el-table-column prop="teacherId" label="教师ID" width="100" />
+      <el-table-column prop="teacherName" label="授课教师" width="140" />
+      <el-table-column prop="courseCategory" label="分类" width="140" />
+      <el-table-column prop="courseType" label="类型" width="90">
+        <template #default="{ row }">
+          <el-tag v-if="row.courseType === 1">必修</el-tag>
+          <el-tag v-else type="warning">选修</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="classTime" label="时间" min-width="140" />
+      <el-table-column prop="classLocation" label="地点" min-width="140" />
       <el-table-column prop="capacity" label="容量" width="90" />
       <el-table-column prop="selectedCount" label="已选" width="90" />
       <el-table-column prop="courseStatus" label="状态" width="90">
@@ -35,10 +49,22 @@
           <el-tag v-else type="info">下架</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="220">
+      <el-table-column label="操作" width="260">
         <template #default="{ row }">
           <el-button size="small" @click="openEdit(row)">修改</el-button>
-          <el-button size="small" type="danger" @click="offline(row.id)">下架</el-button>
+          <el-button
+            v-if="row.courseStatus === 1"
+            size="small"
+            type="warning"
+            @click="setStatus(row.id, 0)"
+          >下架</el-button>
+          <el-button
+            v-else
+            size="small"
+            type="success"
+            @click="setStatus(row.id, 1)"
+          >上架</el-button>
+          <el-button size="small" type="danger" @click="removeCourse(row.id)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -69,6 +95,12 @@
       <el-form-item label="类别">
         <el-select v-model="form.courseCategory" placeholder="请选择/输入分类" filterable allow-create default-first-option style="width: 260px">
           <el-option v-for="c in categories" :key="c.id" :label="c.categoryName" :value="c.categoryName" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="类型">
+        <el-select v-model="form.courseType" style="width: 160px">
+          <el-option label="必修" :value="1" />
+          <el-option label="选修" :value="2" />
         </el-select>
       </el-form-item>
       <el-form-item label="时间">
@@ -102,6 +134,7 @@ const categories = ref([])
 const query = reactive({
   courseName: '',
   courseNo: '',
+  courseCategory: '',
   status: null,
 })
 
@@ -118,6 +151,7 @@ const form = reactive({
   credit: null,
   classHours: null,
   courseCategory: '',
+  courseType: 2,
   classTime: '',
   classLocation: '',
   description: '',
@@ -132,6 +166,7 @@ function resetForm() {
   form.credit = null
   form.classHours = null
   form.courseCategory = ''
+  form.courseType = 2
   form.classTime = ''
   form.classLocation = ''
   form.description = ''
@@ -170,6 +205,7 @@ async function fetchCategories() {
 function resetQuery() {
   query.courseName = ''
   query.courseNo = ''
+  query.courseCategory = ''
   query.status = null
   fetchCourses()
 }
@@ -216,11 +252,23 @@ async function save() {
   }
 }
 
-async function offline(id) {
+async function setStatus(id, status) {
   try {
-    await ElMessageBox.confirm('确认下架该课程？', '提示', { type: 'warning' })
-    await http.post('/course/v1/admin/delete', null, { params: { id } })
-    ElMessage.success('已下架')
+    await ElMessageBox.confirm(status === 1 ? '确认上架该课程？' : '确认下架该课程？', '提示', { type: 'warning' })
+    await http.post('/course/v1/admin/status', null, { params: { id, status } })
+    ElMessage.success(status === 1 ? '已上架' : '已下架')
+    await fetchCourses()
+  } catch (e) {
+    if (e === 'cancel') return
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
+async function removeCourse(id) {
+  try {
+    await ElMessageBox.confirm('确认删除该课程？', '提示', { type: 'warning' })
+    await http.post('/course/v1/admin/remove', null, { params: { id } })
+    ElMessage.success('已删除')
     await fetchCourses()
   } catch (e) {
     if (e === 'cancel') return

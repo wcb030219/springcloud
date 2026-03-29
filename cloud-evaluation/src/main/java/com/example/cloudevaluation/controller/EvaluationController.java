@@ -45,13 +45,17 @@ public class EvaluationController {
      * 获取所有可用的评估指标/题目
      */
     @GetMapping("/questions")
-    public Result<List<EvaluationQuestion>> getQuestions(@RequestParam(required = false) Long templateId) {
+    public Result<List<EvaluationQuestion>> getQuestions(
+            @RequestParam(required = false) Long templateId,
+            @RequestParam(required = false) Long courseId) {
+        if (courseId != null) {
+            templateId = courseMapper.getEvaluationTemplateIdByCourseId(courseId);
+            if (templateId == null) return Result.fail("该课程未配置评估模板");
+        }
         LambdaQueryWrapper<EvaluationQuestion> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(EvaluationQuestion::getStatus, 1) // 启用状态
                     .orderByAsc(EvaluationQuestion::getQuestionOrder);
-        if (templateId != null) {
-            queryWrapper.eq(EvaluationQuestion::getTemplateId, templateId);
-        }
+        if (templateId != null) queryWrapper.eq(EvaluationQuestion::getTemplateId, templateId);
         
         List<EvaluationQuestion> questions = questionMapper.selectList(queryWrapper);
         return Result.success(questions);
@@ -62,6 +66,14 @@ public class EvaluationController {
         LambdaQueryWrapper<EvaluationTemplate> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(EvaluationTemplate::getStatus, 1).orderByDesc(EvaluationTemplate::getUpdateTime);
         return Result.success(templateMapper.selectList(queryWrapper));
+    }
+
+    @GetMapping("/courseTemplate")
+    public Result<EvaluationTemplate> courseTemplate(@RequestParam Long courseId) {
+        if (courseId == null) return Result.fail("课程ID不能为空");
+        Long templateId = courseMapper.getEvaluationTemplateIdByCourseId(courseId);
+        if (templateId == null) return Result.success(null);
+        return Result.success(templateMapper.selectById(templateId));
     }
 
     /**
@@ -106,6 +118,10 @@ public class EvaluationController {
         if (request == null || request.getCourseId() == null) return Result.fail("课程ID不能为空");
         if (request.getAnswers() == null || request.getAnswers().isEmpty()) return Result.fail("答案不能为空");
 
+        Long templateId = courseMapper.getEvaluationTemplateIdByCourseId(request.getCourseId());
+        if (templateId == null) templateId = request.getTemplateId();
+        if (templateId == null) return Result.fail("该课程未配置评估模板");
+
         LambdaQueryWrapper<Evaluation> exists = new LambdaQueryWrapper<>();
         exists.eq(Evaluation::getCourseId, request.getCourseId()).eq(Evaluation::getStudentId, userId);
         if (evaluationMapper.selectCount(exists) > 0) {
@@ -122,9 +138,7 @@ public class EvaluationController {
             if (item == null || item.getQuestionId() == null) return Result.fail("题目ID不能为空");
             EvaluationQuestion q = questionMapper.selectById(item.getQuestionId());
             if (q == null || q.getStatus() == null || q.getStatus() != 1) return Result.fail("题目不存在或已禁用");
-            if (request.getTemplateId() != null && q.getTemplateId() != null && !q.getTemplateId().equals(request.getTemplateId())) {
-                return Result.fail("题目不属于当前模板");
-            }
+            if (q.getTemplateId() == null || !q.getTemplateId().equals(templateId)) return Result.fail("题目不属于当前课程模板");
 
             if (item.getAnswerScore() != null) {
                 int v = item.getAnswerScore();

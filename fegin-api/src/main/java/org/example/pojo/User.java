@@ -1,5 +1,8 @@
 package org.example.pojo;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -9,6 +12,7 @@ import java.util.Date;
  * 用户实体类
  */
 @Data
+@TableName("user")
 public class User implements Serializable {
     
     private static final long serialVersionUID = 1L;
@@ -16,6 +20,7 @@ public class User implements Serializable {
     /**
      * 用户ID
      */
+    @TableId(type = IdType.AUTO)
     private Long id;
     
     /**

@@ -60,6 +60,12 @@ public class CourseController {
         if (course == null || course.getCourseStatus() != 1) {
             return Result.fail("课程不存在或已下架");
         }
+        if (course.getCourseType() != null && course.getCourseType() == 2) {
+            String ct = course.getClassTime() == null ? "" : course.getClassTime().trim();
+            if ((!ct.contains("周三") && !ct.contains("周五")) || !ct.contains("下午")) {
+                return Result.fail("选修课仅允许安排在周三/周五下午时段");
+            }
+        }
 
         String classTime = course.getClassTime() == null ? null : course.getClassTime().trim();
         if (classTime != null && !classTime.isEmpty()) {
@@ -84,6 +90,13 @@ public class CourseController {
                             }
                         }
                     }
+                }
+            }
+            List<Course> requiredCourses = listRequiredCourses(userId);
+            for (Course c : requiredCourses) {
+                String ct = c.getClassTime() == null ? null : c.getClassTime().trim();
+                if (ct != null && !ct.isEmpty() && ct.equals(classTime)) {
+                    return Result.fail("选课冲突：与必修课[" + c.getCourseName() + "]上课时间冲突（" + classTime + "）");
                 }
             }
         }
@@ -209,6 +222,12 @@ public class CourseController {
         return Result.success(selections);
     }
 
+    @GetMapping("/my/required")
+    public Result<List<Course>> myRequired(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if (userId == null) return Result.fail("未登录");
+        return Result.success(listRequiredCourses(userId));
+    }
+
     @GetMapping("/my/drops")
     public Result<List<CourseSelection>> myDrops(
             @RequestParam(required = false) Long userId,
@@ -240,6 +259,25 @@ public class CourseController {
         fillCourses(selections);
 
         Map<String, Map<String, Object>> grouped = new LinkedHashMap<>();
+        List<Course> requiredCourses = listRequiredCourses(userId);
+        for (Course c : requiredCourses) {
+            if (c == null) continue;
+            String time = c.getClassTime() == null ? "" : c.getClassTime().trim();
+            String location = c.getClassLocation() == null ? "" : c.getClassLocation().trim();
+            String key = time + "@@" + location;
+
+            Map<String, Object> item = grouped.get(key);
+            if (item == null) {
+                item = new LinkedHashMap<>();
+                item.put("classTime", time);
+                item.put("classLocation", location);
+                item.put("courses", new ArrayList<Course>());
+                grouped.put(key, item);
+            }
+            @SuppressWarnings("unchecked")
+            List<Course> list = (List<Course>) item.get("courses");
+            list.add(c);
+        }
         if (selections != null) {
             for (CourseSelection s : selections) {
                 Course c = s.getCourse();
@@ -312,8 +350,10 @@ public class CourseController {
     @GetMapping("/list")
     public Result<List<Course>> list() {
         LambdaQueryWrapper<Course> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Course::getCourseStatus, 1); // 1 表示上架
+        queryWrapper.eq(Course::getCourseStatus, 1)
+                .and(w -> w.eq(Course::getCourseType, 2).or().isNull(Course::getCourseType));
         List<Course> courses = courseMapper.selectList(queryWrapper);
+        fillTeacherNames(courses);
         return Result.success(courses);
     }
 
@@ -351,10 +391,14 @@ public class CourseController {
             return Result.fail("课程编号 [" + course.getCourseNo() + "] 已存在，请勿重复添加");
         }
 
+        course.setId(null);
         course.setCreateTime(new Date());
         course.setSelectedCount(0); // 初始已选人数为 0
         if (course.getCourseStatus() == null) {
             course.setCourseStatus(1); // 默认上架
+        }
+        if (course.getCourseType() == null) {
+            course.setCourseType(2);
         }
 
         try {
@@ -373,6 +417,12 @@ public class CourseController {
      */
     @PostMapping("/admin/update")
     public Result<String> updateCourse(@RequestBody Course course) {
+        if (course.getId() == null && course.getCourseNo() != null && !course.getCourseNo().trim().isEmpty()) {
+            LambdaQueryWrapper<Course> q = new LambdaQueryWrapper<>();
+            q.eq(Course::getCourseNo, course.getCourseNo().trim());
+            Course found = courseMapper.selectOne(q);
+            if (found != null) course.setId(found.getId());
+        }
         if (course.getId() == null) return Result.fail("课程ID不能为空");
         
         // 1. 校验课程是否存在
@@ -427,6 +477,30 @@ public class CourseController {
         return Result.success("课程已成功下架");
     }
 
+    @PostMapping("/admin/status")
+    public Result<String> courseStatus(@RequestParam Long id, @RequestParam Integer status) {
+        Course course = courseMapper.selectById(id);
+        if (course == null) return Result.fail("课程不存在");
+        if (status == null || (status != 0 && status != 1)) return Result.fail("状态必须是0或1");
+        course.setCourseStatus(status);
+        course.setUpdateTime(new Date());
+        courseMapper.updateById(course);
+        return Result.success(status == 1 ? "已上架" : "已下架");
+    }
+
+    @PostMapping("/admin/remove")
+    public Result<String> removeCourse(@RequestParam Long id) {
+        Course course = courseMapper.selectById(id);
+        if (course == null) return Result.fail("课程不存在");
+
+        LambdaQueryWrapper<CourseSelection> selectionQ = new LambdaQueryWrapper<>();
+        selectionQ.eq(CourseSelection::getCourseId, id);
+        selectionMapper.delete(selectionQ);
+
+        courseMapper.deleteById(id);
+        return Result.success("删除成功");
+    }
+
     /**
      * 管理员分页/条件查询所有课程
      */
@@ -434,6 +508,7 @@ public class CourseController {
     public Result<List<Course>> adminList(
             @RequestParam(required = false) String courseName,
             @RequestParam(required = false) String courseNo,
+            @RequestParam(required = false) String courseCategory,
             @RequestParam(required = false) Integer status) {
         
         LambdaQueryWrapper<Course> queryWrapper = new LambdaQueryWrapper<>();
@@ -443,12 +518,17 @@ public class CourseController {
         if (courseNo != null && !courseNo.isEmpty()) {
             queryWrapper.eq(Course::getCourseNo, courseNo);
         }
+        if (courseCategory != null && !courseCategory.trim().isEmpty()) {
+            queryWrapper.eq(Course::getCourseCategory, courseCategory.trim());
+        }
         if (status != null) {
             queryWrapper.eq(Course::getCourseStatus, status);
         }
         
         queryWrapper.orderByDesc(Course::getCreateTime);
-        return Result.success(courseMapper.selectList(queryWrapper));
+        List<Course> list = courseMapper.selectList(queryWrapper);
+        fillTeacherNames(list);
+        return Result.success(list);
     }
 
     @PostMapping("/admin/assignTeacher")
@@ -465,6 +545,28 @@ public class CourseController {
         course.setUpdateTime(new Date());
         courseMapper.updateById(course);
         return Result.success("分配成功");
+    }
+
+    @PostMapping("/admin/required/assign")
+    public Result<String> assignRequiredCourse(@RequestParam Long studentId, @RequestParam Long courseId) {
+        if (studentId == null) return Result.fail("学生ID不能为空");
+        if (courseId == null) return Result.fail("课程ID不能为空");
+        User student = userMapper.selectById(studentId);
+        if (student == null || student.getRoleType() == null || student.getRoleType() != 3) return Result.fail("学生不存在");
+        if (student.getStatus() != null && student.getStatus() == 0) return Result.fail("学生账号已禁用");
+        Course course = courseMapper.selectById(courseId);
+        if (course == null) return Result.fail("课程不存在");
+        if (course.getCourseType() == null || course.getCourseType() != 1) return Result.fail("只能分配必修课");
+        selectionMapper.addRequiredCourse(studentId, courseId);
+        return Result.success("分配成功");
+    }
+
+    @PostMapping("/admin/required/remove")
+    public Result<String> removeRequiredCourse(@RequestParam Long studentId, @RequestParam Long courseId) {
+        if (studentId == null) return Result.fail("学生ID不能为空");
+        if (courseId == null) return Result.fail("课程ID不能为空");
+        selectionMapper.removeRequiredCourse(studentId, courseId);
+        return Result.success("移除成功");
     }
 
     @GetMapping("/admin/category/list")
@@ -531,6 +633,20 @@ public class CourseController {
         category.setUpdateTime(new Date());
         courseCategoryMapper.updateById(category);
         return Result.success(status == 1 ? "已启用" : "已禁用");
+    }
+
+    @PostMapping("/admin/category/delete")
+    public Result<String> categoryDelete(@RequestParam Long id) {
+        CourseCategory category = courseCategoryMapper.selectById(id);
+        if (category == null) return Result.fail("分类不存在");
+        String name = category.getCategoryName();
+        if (name != null && !name.trim().isEmpty()) {
+            LambdaQueryWrapper<Course> exists = new LambdaQueryWrapper<>();
+            exists.eq(Course::getCourseCategory, name.trim());
+            if (courseMapper.selectCount(exists) > 0) return Result.fail("该分类已被课程使用，无法删除");
+        }
+        courseCategoryMapper.deleteById(id);
+        return Result.success("删除成功");
     }
 
     @GetMapping("/admin/stats/overview")
@@ -644,10 +760,57 @@ public class CourseController {
 
     private void fillCourses(List<CourseSelection> selections) {
         if (selections == null || selections.isEmpty()) return;
+        List<Long> courseIds = new ArrayList<>();
+        for (CourseSelection s : selections) {
+            if (s != null && s.getCourseId() != null) courseIds.add(s.getCourseId());
+        }
+        if (courseIds.isEmpty()) return;
+        List<Course> courses = courseMapper.selectBatchIds(courseIds);
+        Map<Long, Course> courseMap = new LinkedHashMap<>();
+        if (courses != null) {
+            for (Course c : courses) {
+                if (c != null && c.getId() != null) courseMap.put(c.getId(), c);
+            }
+        }
+        fillTeacherNames(courses);
         for (CourseSelection selection : selections) {
             if (selection == null || selection.getCourseId() == null) continue;
-            Course course = courseMapper.selectById(selection.getCourseId());
-            selection.setCourse(course);
+            selection.setCourse(courseMap.get(selection.getCourseId()));
         }
+    }
+
+    private void fillTeacherNames(List<Course> courses) {
+        if (courses == null || courses.isEmpty()) return;
+        List<Long> teacherIds = new ArrayList<>();
+        for (Course c : courses) {
+            if (c != null && c.getTeacherId() != null) teacherIds.add(c.getTeacherId());
+        }
+        if (teacherIds.isEmpty()) return;
+        List<User> teachers = userMapper.selectBatchIds(teacherIds);
+        Map<Long, String> nameMap = new LinkedHashMap<>();
+        if (teachers != null) {
+            for (User u : teachers) {
+                if (u != null && u.getId() != null) nameMap.put(u.getId(), u.getRealName());
+            }
+        }
+        for (Course c : courses) {
+            if (c != null && c.getTeacherId() != null) c.setTeacherName(nameMap.get(c.getTeacherId()));
+        }
+    }
+
+    private List<Course> listRequiredCourses(Long studentId) {
+        List<Long> courseIds = selectionMapper.listRequiredCourseIds(studentId);
+        List<Course> courses = null;
+        if (courseIds != null && !courseIds.isEmpty()) {
+            courses = courseMapper.selectBatchIds(courseIds);
+        }
+        if (courses == null || courses.isEmpty()) {
+            LambdaQueryWrapper<Course> q = new LambdaQueryWrapper<>();
+            q.eq(Course::getCourseStatus, 1).eq(Course::getCourseType, 1).orderByDesc(Course::getUpdateTime);
+            courses = courseMapper.selectList(q);
+        }
+        if (courses == null) return new ArrayList<>();
+        fillTeacherNames(courses);
+        return courses;
     }
 }

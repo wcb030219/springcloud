@@ -69,6 +69,7 @@ public class AuthorizeFilter implements GlobalFilter, Ordered {
                 // 学生允许访问：查询成绩、获取评估题目、提交评估
                 if (path.contains("/grade/my") || 
                     path.contains("/evaluation/templates") ||
+                    path.contains("/evaluation/courseTemplate") ||
                     path.contains("/evaluation/questions") || 
                     path.contains("/evaluation/submit") ||
                     path.contains("/evaluation/submitAnswers")) {

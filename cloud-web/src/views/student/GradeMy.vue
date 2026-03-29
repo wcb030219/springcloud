@@ -6,9 +6,9 @@
     </div>
     <el-table :data="grades" v-loading="loading" stripe>
       <el-table-column prop="id" label="ID" width="90" />
-      <el-table-column prop="courseId" label="课程ID" width="110" />
+      <el-table-column prop="course.courseName" label="课程" min-width="180" />
+      <el-table-column prop="course.credit" label="学分" width="90" />
       <el-table-column prop="gradeScore" label="成绩" width="110" />
-      <el-table-column prop="teacherId" label="教师ID" width="110" />
       <el-table-column prop="remarks" label="备注" min-width="200" />
       <el-table-column prop="createTime" label="录入时间" min-width="180" />
     </el-table>
@@ -43,4 +43,3 @@ onMounted(fetchGrades)
   margin-bottom: 12px;
 }
 </style>
-

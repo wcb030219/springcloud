@@ -31,6 +31,7 @@
         <template #default="{ row }">
           <el-button size="small" @click="openEdit(row)">编辑</el-button>
           <el-button size="small" type="warning" @click="toggle(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
+          <el-button size="small" type="danger" plain @click="removeQuestion(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -67,7 +68,7 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { http } from '../../api/http'
 
 const loadingTemplates = ref(false)
@@ -104,7 +105,12 @@ async function fetchTemplates() {
   loadingTemplates.value = true
   try {
     const res = await http.get('/evaluation/v1/admin/evaluation/template/list', { params: { status: 1 } })
-    templates.value = Array.isArray(res.data) ? res.data : []
+    const list = Array.isArray(res.data) ? res.data : []
+    const map = new Map()
+    list.forEach((t) => {
+      if (t && t.id != null) map.set(t.id, t)
+    })
+    templates.value = Array.from(map.values())
     if (!templateId.value && templates.value.length > 0) {
       templateId.value = templates.value[0].id
       await fetchQuestions()
@@ -178,6 +184,18 @@ async function toggle(row) {
   }
 }
 
+async function removeQuestion(row) {
+  try {
+    await ElMessageBox.confirm('确认删除该题目？', '提示', { type: 'warning' })
+    await http.post('/evaluation/v1/admin/evaluation/question/delete', null, { params: { id: row.id } })
+    ElMessage.success('已删除')
+    await fetchQuestions()
+  } catch (e) {
+    if (e === 'cancel') return
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
 onMounted(fetchTemplates)
 </script>
 
@@ -190,4 +208,3 @@ onMounted(fetchTemplates)
   align-items: center;
 }
 </style>
-

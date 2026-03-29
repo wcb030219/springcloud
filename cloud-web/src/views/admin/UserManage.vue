@@ -42,6 +42,7 @@
           <el-button size="small" @click="openEdit(row)">编辑</el-button>
           <el-button size="small" type="warning" @click="toggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
           <el-button size="small" type="danger" @click="resetPassword(row)">重置密码</el-button>
+          <el-button size="small" type="danger" plain @click="removeUser(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -208,6 +209,18 @@ async function resetPassword(row) {
   }
 }
 
+async function removeUser(row) {
+  try {
+    await ElMessageBox.confirm('确认删除该用户？', '提示', { type: 'warning' })
+    await http.post('/user/v1/admin/user/delete', null, { params: { id: row.id } })
+    ElMessage.success('已删除')
+    await fetchUsers()
+  } catch (e) {
+    if (e === 'cancel') return
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
 onMounted(fetchUsers)
 </script>
 
@@ -221,4 +234,3 @@ onMounted(fetchUsers)
   font-size: 12px;
 }
 </style>
-
